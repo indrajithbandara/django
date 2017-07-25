@@ -381,6 +381,83 @@ simply specify a custom entry in the :setting:`CACHES` setting named
     required to ensure that the file hash is correct in the case of nested file
     paths.
 
+Static Files mixins
+===================
+
+``ManifestFilesMixin``
+----------------------------
+
+.. class:: storage.ManifestFilesMixin
+
+    A mixin that can be used to provide common behavior
+    for a ``ManifestFileSystemStorage``. The ways to store and retrieve
+    the manifest file in use is configurable
+    and can be further customized by subclasses.
+
+    Here is an example using a :doc:`Custom storage system </howto/custom-file-storage>`::
+
+
+        from django.contrib.staticfiles.storage import ManifestFilesMixin
+
+        from storages.backends.s3boto import S3BotoStorage
+
+        class StaticS3Storage(ManifestFilesMixin, S3BotoStorage):
+            pass
+
+
+    **Methods and Attributes**
+
+    .. attribute:: manifest_version
+
+        The manifest format standard version.
+        By default, this is ``1.0``.
+
+    .. attribute:: manifest_name
+
+        The name of the manifest file to use for saving the hashed names
+        of all processed files.
+        By default, is set to ``staticfiles.json``.
+
+    .. attribute:: manifest_strict
+
+        Controls whether it should raise a ``ValueError``
+        if a file isn't found in the ``manifest_name`` file.
+        By default, this is ``True``.
+
+
+    .. method:: read_manifest()
+
+        Attempts to open and read the :attr:`manifest_name` file. Returns `None`
+        if there was an ``IOError``.
+
+
+    .. method:: load_manifest()
+
+        This method first calls the :meth:`read_manifest` to try to read and
+        parse the file `paths` stored in the :attr:`manifest_name` file. If
+        there is an error it raises a `ValueError`.
+
+    .. method:: post_process()
+
+        This method is called as part of the :djadmin:`collectstatic`
+        management command. It subsequently calls :meth:`save_manifest` to
+        update the :attr:`manifest_name` file.
+
+    .. method:: save_manifest()
+
+        This method is being called as part of the :djadmin:`collectstatic`
+        management command. It saves the hashed `paths` and the :attr:`manifest_version`
+        of the files as a JSON Object.
+
+
+    .. method:: stored_name(name)
+
+        Attempts to retrieve the hashed name of the target file with the storage
+        backend. It tries to normalize the path to avoid multiple names for the
+        same file If a hashed name for a particular hash key was not found the
+        the value of :attr:`manifest_strict` is True it throws a `ValueError`.
+
+
 Finders Module
 ==============
 
